@@ -31,7 +31,7 @@ def get_token_biose(df, biose_field='misc_biose'):
          )
     return df
 
-def get_token_df(df, fields=None, sep='^', fill_value='', biose=True):
+def get_token_df(df, fields=None, sep='^', fill_value='', biose=False):
     tok_dfs = []
     
     if biose:
