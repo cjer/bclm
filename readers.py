@@ -2,7 +2,7 @@ import pandas as pd
 from conllu import parse
 from collections import OrderedDict
 
-def get_conllu_df(path, remove_duplicates=False, remove_very_similar=False):
+def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False):
     with open(path, 'r', encoding='utf8') as f:
         sp_conllu = parse(f.read())
     fixed = []
@@ -38,7 +38,7 @@ def get_conllu_df(path, remove_duplicates=False, remove_very_similar=False):
     return df
 
 
-def make_conll_df(path, add_head_stuff=False):
+def read_conll(path, add_head_stuff=False):
     # CoNLL file is tab delimeted with no quoting
     # quoting=3 is csv.QUOTE_NONE
     df = (pd.read_csv(path, sep='\t', header=None, quoting=3, comment='#',
@@ -81,12 +81,12 @@ def get_feats(s):
         return pd.Series()
 
     
-def get_yap_output_df(tokens_path, dep_path, map_path):
+def read_yap_output(tokens_path, dep_path, map_path):
     tokens = dict(flatten([[(str(j+1)+'_'+str(i+1), tok) for i, tok in enumerate(sent.split('\n'))]
               for j, sent in 
               enumerate(open(os.path.join(yap_output_dir, tokens_path), 'r').read().split('\n\n'))]))
     lattices = read_lattices(map_path)
-    dep = make_conll_df(dep_path)
+    dep = read_conll(dep_path)
     df = (pd.concat([dep, lattices.misc_token_id], axis=1)
           .assign(sent_tok = lambda x: x.sent.astype(str) + '_' + x.misc_token_id.astype(str))
           .assign(misc_token_str = lambda x: x.sent_tok.map(tokens))
