@@ -6,8 +6,13 @@ import os
 
 BCLM_FOLDER = os.path.dirname(os.path.realpath(__file__))
 DATA_FOLDER = os.path.join(BCLM_FOLDER, 'data')
-DF_PATHS = {'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
-            'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),}
+YAP_OUT_FOLDER = os.path.join(DATA_FOLDER, 'yap_outputs')
+DF_PATHS = {
+            'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
+            'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),
+            'yap_dev': os.path.join(YAP_OUT_FOLDER, 'yap_dev.csv.gz'),
+            'yap_test': os.path.join(YAP_OUT_FOLDER, 'yap_test.csv.gz'),
+           }
 
 
 def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False, subset=None):
