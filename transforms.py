@@ -60,5 +60,5 @@ def get_token_df(df, fields=None, biose=['biose_layer0'], sep='^', fill_value=''
     return tok_df
 
 
-def get_sentences_list(tdf, fields, sent_id='sent_id', unit='token_id'):
+def get_sentences_list(df, fields, sent_id='sent_id', unit='token_id'):
     return df.groupby(sent_id)[fields].apply(lambda x: (x.values.tolist()))
