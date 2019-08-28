@@ -1,14 +1,20 @@
 import pandas as pd
 from conllu import parse
 from collections import OrderedDict
+import os
 
-DF_PATHS = {'spmrl': 'data/spdf_fixed.csv.gz',
-            'ud': 'data/uddf_fixed.csv.gz'}
+
+BCLM_FOLDER = os.path.dirname(os.path.realpath(__file__))
+DATA_FOLDER = os.path.join(BCLM_FOLDER, 'data')
+DF_PATHS = {'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
+            'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),}
+
 
 def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False):
-    df = pd.read_csv(DF_PATHS(lower(corpus)), low_memory=False)
+    df = pd.read_csv(DF_PATHS[corpus.lower()], low_memory=False)
     return df
-    
+
+
 def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False):
     with open(path, 'r', encoding='utf8') as f:
         sp_conllu = parse(f.read())
