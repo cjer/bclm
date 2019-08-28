@@ -41,7 +41,7 @@ def get_token_df(df, fields=None, sep='^', fill_value='', biose=False):
     if fields is not None:
         concat_fields = lambda x: pd.Series({f: sep.join(x[f].fillna(fill_value).tolist()) for f in fields})
         tok_fields = (df
-                .groupby(['sent_id', 'misc_token_id', 'misc_token_str'])
+                .groupby(['sent_id', 'token_id', 'token_str'])
                 .apply(concat_field))
         tok_dfs.append(tok_fields)
         
