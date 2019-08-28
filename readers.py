@@ -10,8 +10,10 @@ DF_PATHS = {'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
             'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),}
 
 
-def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False):
+def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False, subset=None):
     df = pd.read_csv(DF_PATHS[corpus.lower()], low_memory=False)
+    if subset is not None:
+        df = df[df.set==subset]
     return df
 
 
