@@ -1,7 +1,10 @@
 import pandas as pd
 
 
-def get_token_biose(df, biose_field='misc_biose'):
+TOK_FIELDS = ['sent_id', 'token_id', 'token_str']
+
+
+def get_token_biose(df, biose_field):
     
     def _single_token_conversion(tok):
         all_bio = tok.biose_only.tolist()
@@ -22,27 +25,27 @@ def get_token_biose(df, biose_field='misc_biose'):
             return 'O'
         return new_bio+'-'+all_typ.pop()
     
-    df[['biose_only', 'ner_type']] = spdf[biose_field].str.split('-', expand=True)
+    df[['biose_only', 'ner_type']] = df[biose_field].str.split('-', expand=True)
     df = (df
-          .groupby(['sent_id', 'misc_token_id', 'misc_token_str'])
+          .groupby(TOK_FIELDS)
           .apply(_single_token_conversion)
-          .reset_index().rename(columns={0:'biose'})
-          .set_index(['sent_id', 'misc_token_id', 'misc_token_str'])
+          .reset_index().rename(columns={0: biose_field})
+          .set_index(TOK_FIELDS)
          )
     return df
 
 
-def get_token_df(df, fields=None, sep='^', fill_value='', biose=False):
+def get_token_df(df, fields=None, biose=['biose_layer0'], sep='^', fill_value=''):
     tok_dfs = []
     
-    if biose:
-        tok_dfs.append(get_token_biose(df))
+    for col in biose:
+        tok_dfs.append(get_token_biose(df, col))
         
     if fields is not None:
         concat_fields = lambda x: pd.Series({f: sep.join(x[f].fillna(fill_value).tolist()) for f in fields})
         tok_fields = (df
-                .groupby(['sent_id', 'token_id', 'token_str'])
-                .apply(concat_field))
+                .groupby(TOK_FIELDS)
+                .apply(concat_fields))
         tok_dfs.append(tok_fields)
         
     tok_df = (pd.concat(tok_dfs, axis=1)
