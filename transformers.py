@@ -31,6 +31,7 @@ def get_token_biose(df, biose_field='misc_biose'):
          )
     return df
 
+
 def get_token_df(df, fields=None, sep='^', fill_value='', biose=False):
     tok_dfs = []
     
@@ -43,6 +44,7 @@ def get_token_df(df, fields=None, sep='^', fill_value='', biose=False):
                 .groupby(['sent_id', 'misc_token_id', 'misc_token_str'])
                 .apply(concat_field))
         tok_dfs.append(tok_fields)
+        
     tok_df = (pd.concat(tok_dfs, axis=1)
                 .sort_index()
                 .assign(set = lambda x: (x.index

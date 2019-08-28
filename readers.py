@@ -2,6 +2,10 @@ import pandas as pd
 from conllu import parse
 from collections import OrderedDict
 
+def read_dataframe(path, remove_duplicates=False, remove_very_similar=False):
+    df = pd.read_csv(path, low_memory=False)
+    
+    
 def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False):
     with open(path, 'r', encoding='utf8') as f:
         sp_conllu = parse(f.read())
