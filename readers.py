@@ -47,6 +47,9 @@ def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False, s
 
 def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False,
                          expand_feats=True, expand_misc=True):
+    # metadata must include sent_id (int)
+    # if you want to remove duplicates or very similar, metadata must also include 
+    # duplicate_sent_id and very_similar_sent_id
     with open(path, 'r', encoding='utf8') as f:
         sp_conllu = parse(f.read())
     fixed = []
@@ -66,7 +69,7 @@ def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=Fals
                     del(t['feats'])
                 if expand_misc:
                     if t['misc'] is not None:
-                        t.update({'misc_'+f: v for f, v in t['misc'].items()})
+                        t.update({f: v for f, v in t['misc'].items()})
                     del(t['misc'])
                 t.update(tl.metadata)
                 fixed.append(t)
@@ -75,12 +78,15 @@ def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=Fals
             if remove_very_similar:
                 very_sim_to_remove = dup_to_remove | set(eval(tl.metadata['very_similar_sent_id']))
 
-    df = (pd.DataFrame(fixed)
-          .assign(sent_id = lambda x: x.sent_id.astype(int))
-          .assign(global_sent_id = lambda x: x.global_sent_id.astype(int))
-          .assign(misc_token_id = lambda x: x.misc_token_id.astype(int))
+    df = pd.DataFrame(fixed)
+    #sent_id required
+    df['sent_id'] = df.sent_id.astype(int)
+    
+    if global_sent_id in df.columns:
+          df['global_sent_id'] = df.global_sent_id.astype(int)
+    if token_id in df.columns:
+          df['token_id'] = df.misc_token_id.astype(int)
 
-         )
     return df
 
 
