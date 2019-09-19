@@ -65,3 +65,10 @@ def get_token_df(df, fields=None, biose=None, token_fields = TOK_FIELDS, sep='^'
 
 def get_sentences_list(df, fields, sent_id='sent_id'):
     return df.groupby(sent_id)[fields].apply(lambda x: (x.values.tolist()))
+
+
+def get_feature_lists(df, fields, sent_id='sent_id'):
+    feats = []
+    for field in fields:
+        feats.append(df.groupby(sent_id)[field].apply(lambda x: (x.values.tolist())))
+    return feats

@@ -2,11 +2,34 @@ import pandas as pd
 from conllu import parse
 from collections import OrderedDict
 import os
+import numpy as np
 
 
 BCLM_FOLDER = os.path.dirname(os.path.realpath(__file__))
 DATA_FOLDER = os.path.join(BCLM_FOLDER, 'data')
 YAP_OUT_FOLDER = os.path.join(DATA_FOLDER, 'yap_outputs')
+TREEBANK_TOKEN_PATHS = {
+                'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_tokens.txt'),
+                'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev_tokens.txt'),
+                'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_tokens.txt'),
+                }
+YAP_OUTPUT_PATHS = {
+                    'seg': {
+                            'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_seg.conll'),
+                            'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev_seg.conll'),
+                            'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_seg.conll'),
+                    },
+                    'map': {
+                            'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_map.conll'),
+                            'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev_map.conll'),
+                            'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_map.conll'),
+                    },
+                    'dep': {
+                            'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_dep.conll'),
+                            'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev_dep.conll'),
+                            'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_dep.conll'),
+                    },
+                }
 DF_PATHS = {
             'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
             'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),
@@ -22,7 +45,8 @@ def read_dataframe(corpus, remove_duplicates=False, remove_very_similar=False, s
     return df
 
 
-def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False):
+def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=False,
+                         expand_feats=True, expand_misc=True):
     with open(path, 'r', encoding='utf8') as f:
         sp_conllu = parse(f.read())
     fixed = []
@@ -36,12 +60,14 @@ def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=Fals
         for tok in tl:
             t = OrderedDict(tok)
             if type(t['id']) is not tuple:
-                if t['feats'] is not None:
-                    t.update({'feats_'+f: v for f, v in t['feats'].items()})
-                del(t['feats'])
-                if t['misc'] is not None:
-                    t.update({'misc_'+f: v for f, v in t['misc'].items()})
-                del(t['misc'])
+                if expand_feats:
+                    if t['feats'] is not None:
+                        t.update({'feats_'+f: v for f, v in t['feats'].items()})
+                    del(t['feats'])
+                if expand_misc:
+                    if t['misc'] is not None:
+                        t.update({'misc_'+f: v for f, v in t['misc'].items()})
+                    del(t['misc'])
                 t.update(tl.metadata)
                 fixed.append(t)
             if remove_duplicates:
@@ -64,24 +90,25 @@ def read_conll(path, add_head_stuff=False):
     df = (pd.read_csv(path, sep='\t', header=None, quoting=3, comment='#',
                 names = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc'])
                 # add sentence labels
-                .assign(sent = lambda x: (x.id==1).cumsum())
+                .assign(sent_id = lambda x: (x.id==1).cumsum())
                 # replace bad root dependency tags
-                .replace({'DEPREL': {'prd': 'ROOT'}})
+                .replace({'deprel': {'prd': 'ROOT'}})
                )
     
     if add_head_stuff:
-        df = df.merge(df[['ID', 'FORM', 'sent', 'UPOS']].rename(index=str, columns={'FORM': 'head_form', 'UPOS': 'head_upos'}).set_index(['sent', 'ID']),
-               left_on=['sent', 'HEAD'], right_index=True, how='left')
+        df = df.merge(df[['id', 'form', 'sent', 'upostag']].rename(index=str, columns={'form': 'head_form', 'upostag': 'head_upos'}).set_index(['sent', 'id']),
+               left_on=['sent', 'head'], right_index=True, how='left')
     return df
 
 
 def read_lattices(path):
     df = (pd.read_csv(path, sep='\t', header=None, quoting=3, 
-                names = ['ID1', 'ID2', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'misc_token_id'])
+                names = ['ID1', 'ID2', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'token_id'])
                 # add sentence labels
-                .assign(sent = lambda x: (x.ID1==0).cumsum())
+                .assign(sent_id = lambda x: (x.ID1==0).cumsum())
                )
     return df
+
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -101,16 +128,23 @@ def get_feats(s):
         return pd.Series()
 
     
-def read_yap_output(tokens_path, dep_path, map_path):
+def read_yap_output(treebank_set='dev', tokens_path=None, dep_path=None, map_path=None, expand_feats=False):
+    if treebank_set is not None:
+        tokens_path = TREEBANK_TOKEN_PATHS[treebank_set]
+        dep_path = YAP_OUTPUT_PATHS['dep'][treebank_set]
+        map_path = YAP_OUTPUT_PATHS['map'][treebank_set]
+        
     tokens = dict(flatten([[(str(j+1)+'_'+str(i+1), tok) for i, tok in enumerate(sent.split('\n'))]
               for j, sent in 
-              enumerate(open(os.path.join(yap_output_dir, tokens_path), 'r').read().split('\n\n'))]))
+              enumerate(open(tokens_path, 'r').read().split('\n\n'))]))
     lattices = read_lattices(map_path)
     dep = read_conll(dep_path)
-    df = (pd.concat([dep, lattices.misc_token_id], axis=1)
-          .assign(sent_tok = lambda x: x.sent.astype(str) + '_' + x.misc_token_id.astype(str))
-          .assign(misc_token_str = lambda x: x.sent_tok.map(tokens))
+    df = (pd.concat([dep, lattices.token_id], axis=1)
+          .assign(sent_tok = lambda x: x.sent_id.astype(str) + '_' + x.token_id.astype(str))
+          .assign(token_str = lambda x: x.sent_tok.map(tokens))
           .drop('sent_tok', axis=1)
           )
-    df = pd.concat([df, df.feats.apply(get_feats)], axis=1).drop('feats', axis=1)
+    if expand_feats:
+        df = pd.concat([df, df.feats.apply(get_feats)], axis=1).drop('feats', axis=1)
+        
     return df
