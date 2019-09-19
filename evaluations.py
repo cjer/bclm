@@ -1,7 +1,12 @@
 import sys
 import pandas as pd
-from .readers import read_conll, read_dataframe, read_yap_output
+from .readers import read_conll, read_dataframe, read_yap_output, read_treebank_conllu
 from collections import Counter
+
+
+FORM_POS_FEATS_WITH_TOKEN_ID = ['sent_id', 'token_id', 'form', 'upostag', 'feats']
+FORM_POS_WITH_TOKEN_ID = ['sent_id', 'token_id', 'form', 'upostag']
+DEFAULT_COLS = FORM_POS_WITH_TOKEN_ID
 
 
 def evaluate_multi_sets(gold_set, pred_set, verbose=True, examples=5):
@@ -26,9 +31,35 @@ def create_multi_set_from_df(df, cols):
     return Counter(df.groupby(cols).size().to_dict())
 
 
-def evaluate_files(gold_conllu_path=None, pred_conllu_path=None, 
-                   treebank_gold_set='dev', yap_pred_set='dev', 
-                   cols = ['sent_id', 'token_id', 'form', 'upostag'],
+def evaluate_dfs(gold_df, pred_df, cols=DEFAULT_COLS,
+                 sentence_subset=None, replace_upos_tag_underscore=True):
+    
+    if sentence_subset is not None:
+        gold_df = gold_df[gold_df.sent_id.isin(sentence_subset)]
+        pred_df = pred_df[pred_df.sent_id.isin(sentence_subset)]
+    
+    if replace_upos_tag_underscore:
+        gold_df['upostag'] = gold_df.upostag.str.replace('_','-')
+        pred_df['upostag'] = pred_df.upostag.str.replace('_','-')
+
+    gold_multi_set = create_multi_set_from_df(gold_df, cols)
+    pred_multi_set = create_multi_set_from_df(pred_df, cols)
+    
+    return evaluate_multi_sets(gold_multi_set, pred_multi_set)
+
+
+def evaluate_conllu_files(gold_conllu_path, pred_conllu_path,
+                           cols = DEFAULT_COLS,
+                           sentence_subset=None,
+                           replace_upos_tag_underscore=True,):
+    gold_df = read_treebank_conllu(gold_conllu_path, expand_misc=False, expand_feats=False)
+    pred_df = read_treebank_conllu(pred_conllu_path, expand_misc=False, expand_feats=False)
+    
+    return evaluate_dfs(gold_df, pred_df, cols, sentence_subset, replace_upos_tag_underscore)
+    
+    
+def evaluate_treebank_files(treebank_gold_set='dev', yap_pred_set='dev', 
+                   cols = DEFAULT_COLS,
                    alternative_pred_fields=None,
                    truncate=None,
                    sentence_subset=None,
@@ -51,21 +82,10 @@ def evaluate_files(gold_conllu_path=None, pred_conllu_path=None,
                 print(f'truncated from {old_len} to {pred_df.shape[0]}')
             for f, alt_values in alternative_pred_fields.items():
                 pred_df[f] = alt_values
-    
-    if sentence_subset is not None:
-        gold_df = gold_df[gold_df.sent_id.isin(sentence_subset)]
-        pred_df = pred_df[pred_df.sent_id.isin(sentence_subset)]
-    
-    if replace_upos_tag_underscore:
-        gold_df['upostag'] = gold_df.upostag.str.replace('_','-')
-        pred_df['upostag'] = pred_df.upostag.str.replace('_','-')
 
-    gold_multi_set = create_multi_set_from_df(gold_df, cols)
-    print(list(gold_multi_set)[:5])
-    pred_multi_set = create_multi_set_from_df(pred_df, cols)
-    print(list(pred_multi_set)[:5])
-    
-    return evaluate_multi_sets(gold_multi_set, pred_multi_set)
+
+    return evaluate_dfs(gold_df, pred_df, cols, sentence_subset, replace_upos_tag_underscore)
+        
 
 
 if __name__ == '__main__':
