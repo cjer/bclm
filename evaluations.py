@@ -52,6 +52,7 @@ def evaluate_conllu_files(gold_conllu_path, pred_conllu_path,
                            cols = DEFAULT_COLS,
                            sentence_subset=None,
                            replace_upos_tag_underscore=True,):
+    
     gold_df = read_treebank_conllu(gold_conllu_path, expand_misc=False, expand_feats=False)
     pred_df = read_treebank_conllu(pred_conllu_path, expand_misc=False, expand_feats=False)
     
@@ -89,9 +90,10 @@ def evaluate_treebank_files(treebank_gold_set='dev', yap_pred_set='dev',
 
 
 if __name__ == '__main__':
-    gold_path, pred_path = sys.argv[1], sys.argv[2]
+    gold_conllu_path, pred_conllu_path = sys.argv[1], sys.argv[2]
     
-    # read gold and pred conllu to DF
-    # create_set_from_df
+    gold_df = read_treebank_conllu(gold_conllu_path, expand_misc=False, expand_feats=False)
+    pred_df = read_treebank_conllu(pred_conllu_path, expand_misc=False, expand_feats=False)
     
-    #evaluate()
+    evaluate_dfs(gold_df, pred_df, cols, sentence_subset, replace_upos_tag_underscore)
+    
