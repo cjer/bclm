@@ -8,11 +8,13 @@ import numpy as np
 BCLM_FOLDER = os.path.dirname(os.path.realpath(__file__))
 DATA_FOLDER = os.path.join(BCLM_FOLDER, 'data')
 YAP_OUT_FOLDER = os.path.join(DATA_FOLDER, 'yap_outputs')
+
 TREEBANK_TOKEN_PATHS = {
                 'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_tokens.txt'),
                 'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev_tokens.txt'),
                 'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_tokens.txt'),
                 }
+
 YAP_OUTPUT_PATHS = {
                     'seg': {
                             'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train_seg.conll'),
@@ -30,6 +32,13 @@ YAP_OUTPUT_PATHS = {
                             'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test_dep.conll'),
                     },
                 }
+
+LATTICES_PATHS = {
+                    'train': os.path.join(YAP_OUT_FOLDER, 'spmrl_train.lattices'),
+                    'dev': os.path.join(YAP_OUT_FOLDER, 'spmrl_dev.lattices'),
+                    'test': os.path.join(YAP_OUT_FOLDER, 'spmrl_test.lattices'),
+                }
+
 DF_PATHS = {
             'spmrl': os.path.join(DATA_FOLDER, 'spdf_fixed.csv.gz'),
             'ud': os.path.join(DATA_FOLDER, 'uddf_fixed.csv.gz'),
@@ -106,14 +115,16 @@ def read_conll(path, add_head_stuff=False):
                left_on=['sent', 'head'], right_index=True, how='left')
     return df
 
+from io import StringIO
 
 def read_lattices(path):
-    df = (pd.read_csv(path, sep='\t', header=None, quoting=3, 
-                names = ['ID1', 'ID2', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'token_id'])
-                # add sentence labels
-                .assign(sent_id = lambda x: (x.ID1==0).cumsum())
-               )
-    return df
+    dfs = []
+    for i, sent in enumerate(open(path, 'r', encoding='utf8').read().split('\n\n')):
+        dfs.append(pd.read_csv(StringIO(sent), sep='\t', header=None, quoting=3, 
+                               names = ['ID1', 'ID2', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'token_id'])
+                  .assign(sent_id = i+1))
+    
+    return pd.concat(dfs).reset_index(drop=True)
 
 
 flatten = lambda l: [item for sublist in l for item in sublist]
@@ -143,6 +154,7 @@ def read_yap_output(treebank_set='dev', tokens_path=None, dep_path=None, map_pat
     tokens = dict(flatten([[(str(j+1)+'_'+str(i+1), tok) for i, tok in enumerate(sent.split('\n'))]
               for j, sent in 
               enumerate(open(tokens_path, 'r').read().split('\n\n'))]))
+    
     lattices = read_lattices(map_path)
     dep = read_conll(dep_path)
     df = (pd.concat([dep, lattices.token_id], axis=1)
