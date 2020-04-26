@@ -99,10 +99,10 @@ def read_treebank_conllu(path, remove_duplicates=False, remove_very_similar=Fals
     return df
 
 
-def read_conll(path, add_head_stuff=False):
+def read_conll(path, add_head_stuff=False, comment='#'):
     # CoNLL file is tab delimeted with no quoting
     # quoting=3 is csv.QUOTE_NONE
-    df = (pd.read_csv(path, sep='\t', header=None, quoting=3, comment='#',
+    df = (pd.read_csv(path, sep='\t', header=None, quoting=3, comment=comment,
                 names = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc'])
                 # add sentence labels
                 .assign(sent_id = lambda x: (x.id==1).cumsum())
@@ -145,7 +145,7 @@ def get_feats(s):
         return pd.Series()
 
     
-def read_yap_output(treebank_set='dev', tokens_path=None, dep_path=None, map_path=None, expand_feats=False):
+def read_yap_output(treebank_set='dev', tokens_path=None, dep_path=None, map_path=None, expand_feats=False, comment=None):
     if treebank_set is not None:
         tokens_path = TREEBANK_TOKEN_PATHS[treebank_set]
         dep_path = YAP_OUTPUT_PATHS['dep'][treebank_set]
@@ -156,7 +156,7 @@ def read_yap_output(treebank_set='dev', tokens_path=None, dep_path=None, map_pat
               enumerate(open(tokens_path, 'r').read().split('\n\n'))]))
     
     lattices = read_lattices(map_path)
-    dep = read_conll(dep_path)
+    dep = read_conll(dep_path, comment=comment)
     df = (pd.concat([dep, lattices.token_id], axis=1)
           .assign(sent_tok = lambda x: x.sent_id.astype(str) + '_' + x.token_id.astype(str))
           .assign(token_str = lambda x: x.sent_tok.map(tokens))
