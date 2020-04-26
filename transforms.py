@@ -63,8 +63,12 @@ def get_token_df(df, fields=None, biose=None, token_fields = TOK_FIELDS, sep='^'
     return tok_df
 
 
-def get_sentences_list(df, fields, sent_id='sent_id'):
-    return df.groupby(sent_id)[fields].apply(lambda x: (x.values.tolist()))
+def get_sentences_list(df, fields, sent_id='sent_id', drop_yy=False):
+    if drop_yy:
+        out_df = df[~df.upostag.str.startswith('yy')]
+    else:
+        out_df = df
+    return out_df.groupby(sent_id)[fields].apply(lambda x: (x.values.tolist()))
 
 
 def get_feature_lists(df, fields, sent_id='sent_id'):
