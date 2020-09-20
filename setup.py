@@ -1,5 +1,5 @@
 import setuptools
-
+print(setuptools.find_packages())
 with open("README.md", "r") as fh:
     long_description = fh.read()
     setuptools.setup(
@@ -11,7 +11,7 @@ with open("README.md", "r") as fh:
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/cjer/bclm",
-        packages=setuptools.find_packages(),
+        packages=['bclm'],
         install_requires=['pandas',
                           'conllu',
                           'numpy'],
