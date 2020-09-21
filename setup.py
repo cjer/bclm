@@ -1,5 +1,20 @@
 import setuptools
-print(setuptools.find_packages())
+
+
+def get_data_files(kind: str) -> list:
+    from os import listdir
+    from os.path import isfile, join, dirname, realpath
+    dir_path = dirname(realpath(__file__))
+
+    if kind == 'data':
+        data_path = join(dir_path, 'bclm', 'data')
+    elif kind == 'yap':
+        data_path = join(dir_path, 'bclm', 'data', 'yap_outputs')
+    else:
+        raise ValueError("Only support [data|yelp] as an input")
+    return [join(data_path, f) for f in listdir(data_path) if isfile(join(data_path, f))]
+
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
     setuptools.setup(
@@ -11,7 +26,8 @@ with open("README.md", "r") as fh:
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/cjer/bclm",
-        packages=['bclm'],
+        packages=['bclm', 'bclm/data'],
+        package_data={'bclm': get_data_files('data'),'bclm/data':get_data_files('yap')},
         install_requires=['pandas',
                           'conllu',
                           'numpy'],
@@ -19,3 +35,4 @@ with open("README.md", "r") as fh:
                      "License :: OSI Approved :: MIT License",
                      "Operating System :: OS Independent", ],
     )
+
