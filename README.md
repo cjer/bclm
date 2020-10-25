@@ -13,4 +13,4 @@ In order to create the wheel:
 2. Now run this command from the same directory where setup.py is located:
 `python setup.py bdist_wheel`
 3. It will generate a wheel file saved in the `dist` folder. 
-4. You can now run `python3 pip instatll <PATH_TO_WHEEL>`
+4. You can now run `pip install <PATH_TO_WHEEL>`
