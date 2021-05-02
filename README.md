@@ -17,7 +17,7 @@ In order to create the wheel:
 
 ## Citation
 
-Please cite the NEMO^2 paper if you use bclm in your academic work:
+Please cite the NEMO^2 paper if you use bclm in your research:
 ```bibtex
 @article{DBLP:journals/corr/abs-2007-15620,
   author    = {Dan Bareket and
