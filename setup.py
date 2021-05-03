@@ -19,7 +19,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
     setuptools.setup(
         name='bclm',
-        version='0.1.1',
+        version='1.0.0',
         author="Dan Bareket",
         author_email="dbareket@gmail.com",
         description="THE go-to place for all Python Hebrew Treebank processing tasks.",
