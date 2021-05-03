@@ -25,7 +25,14 @@ def get_token_biose(df, biose_field, token_fields = TOK_FIELDS):
             return 'O'
         return new_bio+'-'+all_typ.pop()
     
-    df[['biose_only', 'ner_type']] = df[biose_field].str.split('-', expand=True)
+    
+    split_biose = df[biose_field].str.split('-', expand=True)
+    if len(split_biose.columns)==2:
+        df[['biose_only', 'ner_type']] = split_biose
+    else:
+        df['biose_only'] = split_biose
+        df['ner_type'] = None
+        
     df = (df
           .groupby(token_fields)
           .apply(_single_token_conversion)
