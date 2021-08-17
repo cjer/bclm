@@ -26,7 +26,7 @@ with open("README.md", "r") as fh:
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/cjer/bclm",
-        download_url="https://github.com/cjer/bclm/archive/refs/tags/v1.0.0-alpha.tar.gz",
+        download_url="https://github.com/cjer/bclm/archive/refs/tags/v1.0.0-beta.tar.gz",
         packages=['bclm', 'bclm/data'],
         package_data={'bclm': get_data_files('data'), 'bclm/data': get_data_files('yap')},
         install_requires=['pandas',
